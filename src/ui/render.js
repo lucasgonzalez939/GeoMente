@@ -44,7 +44,7 @@ export function renderBoard(svg, state, handlers, locale = "en") {
       const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       hit.setAttribute("cx", String(c.x));
       hit.setAttribute("cy", String(c.y));
-      hit.setAttribute("r", "18");
+      hit.setAttribute("r", "22");
       hit.setAttribute("class", "pin-hit");
       hit.dataset.gridX = String(x);
       hit.dataset.gridY = String(y);

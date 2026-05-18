@@ -15,6 +15,8 @@ import { renderBoard, updateStatusBadge } from "./ui/render.js";
 const state = createRuntimeState(challenges.length);
 const storage = loadData();
 let locale = normalizeLocale(storage.language);
+let activeMobilePanelId = "objective-card";
+let lastCelebratedKey = "";
 const ui = mapUi();
 
 wireControls();
@@ -73,6 +75,15 @@ function mapUi() {
     onboardingTip3: byId("onboarding-tip-3"),
     startLearningBtn: byId("start-learning-btn"),
     learningPanel: document.querySelector(".sidebar"),
+    mobilePanelTabs: byId("mobile-panel-tabs"),
+    panelTabs: Array.from(document.querySelectorAll(".panel-tab")),
+    objectiveCard: byId("objective-card"),
+    feedbackCard: byId("feedback-card"),
+    encouragementCard: byId("encouragement-card"),
+    successDialog: byId("success-dialog"),
+    successTitle: byId("success-title"),
+    successMessage: byId("success-message"),
+    successCloseBtn: byId("success-close-btn"),
   };
 }
 
@@ -192,6 +203,17 @@ function wireControls() {
     ui.onboardingDialog.close();
   });
 
+  ui.successCloseBtn.addEventListener("click", () => ui.successDialog.close());
+
+  ui.panelTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      activeMobilePanelId = tab.dataset.panelTarget;
+      updateMobilePanelVisibility();
+    });
+  });
+
+  window.addEventListener("resize", updateMobilePanelVisibility);
+
   document.addEventListener("keydown", (e) => {
     const cmd = e.metaKey || e.ctrlKey;
     if (cmd && e.key.toLowerCase() === "z") {
@@ -306,6 +328,9 @@ function finalizeAttempt() {
     snapshots: state.playbackFrames,
   };
   saveData(storage);
+  if (result.passed) {
+    showSuccessModal(challenge);
+  }
 }
 
 function evaluateCurrent() {
@@ -336,6 +361,10 @@ function applyStaticTranslations() {
   byId("close-btn").textContent = t(locale, "action.closeShape");
   byId("reset-btn").textContent = t(locale, "action.reset");
   ui.learningPanel.setAttribute("aria-label", t(locale, "panel.learning"));
+  ui.mobilePanelTabs.setAttribute("aria-label", t(locale, "panel.tabs"));
+  byId("tab-objective").textContent = t(locale, "panel.tab.objective");
+  byId("tab-feedback").textContent = t(locale, "panel.tab.feedback");
+  byId("tab-encouragement").textContent = t(locale, "panel.tab.encouragement");
   ui.objectiveHeading.textContent = t(locale, "objective.heading");
   ui.guidedPromptLabel.textContent = t(locale, "objective.guidedPrompt");
   ui.reflectionLabel.textContent = t(locale, "objective.reflection");
@@ -360,11 +389,14 @@ function applyStaticTranslations() {
   ui.onboardingTip2.textContent = t(locale, "onboarding.tip2");
   ui.onboardingTip3.textContent = t(locale, "onboarding.tip3");
   ui.startLearningBtn.textContent = t(locale, "onboarding.start");
+  ui.successTitle.textContent = t(locale, "success.title");
+  ui.successCloseBtn.textContent = t(locale, "success.continue");
   syncEditModeButton();
 }
 
 function rerender() {
   applyStaticTranslations();
+  updateMobilePanelVisibility();
   renderBoard(ui.svg, state, { onPinInteract }, locale);
   const challenge = getCurrentChallenge();
   const result = evaluateCurrent();
@@ -406,6 +438,32 @@ function rerender() {
     li.textContent = t(locale, "history.empty");
     ui.reflectionHistory.appendChild(li);
   }
+}
+
+function isMobileViewport() {
+  return window.matchMedia("(max-width: 980px)").matches;
+}
+
+function updateMobilePanelVisibility() {
+  const cards = [ui.objectiveCard, ui.feedbackCard, ui.encouragementCard];
+  const isMobile = isMobileViewport();
+  cards.forEach((card) => {
+    const visible = !isMobile || card.id === activeMobilePanelId;
+    card.classList.toggle("panel-visible", visible);
+  });
+  ui.panelTabs.forEach((tab) => {
+    const isActive = tab.dataset.panelTarget === activeMobilePanelId;
+    tab.classList.toggle("is-active", isActive);
+    tab.setAttribute("aria-selected", String(isActive));
+  });
+}
+
+function showSuccessModal(challenge) {
+  const key = `${challenge.id}:${state.pathPoints.length}:${state.playbackFrames.length}`;
+  if (lastCelebratedKey === key || ui.successDialog.open) return;
+  lastCelebratedKey = key;
+  ui.successMessage.textContent = t(locale, "success.message", { title: challenge.title });
+  ui.successDialog.showModal();
 }
 
 function buildReflectionSummary() {

@@ -30,7 +30,12 @@
     </section>
 
     <aside class="sidebar" aria-label="Learning panel">
-      <section class="card" aria-labelledby="objective-heading">
+      <div id="mobile-panel-tabs" class="mobile-panel-tabs" role="tablist" aria-label="Learning panels">
+        <button id="tab-objective" class="panel-tab is-active" type="button" role="tab" aria-selected="true" data-panel-target="objective-card">Objective</button>
+        <button id="tab-feedback" class="panel-tab" type="button" role="tab" aria-selected="false" data-panel-target="feedback-card">Feedback</button>
+        <button id="tab-encouragement" class="panel-tab" type="button" role="tab" aria-selected="false" data-panel-target="encouragement-card">Encouragement</button>
+      </div>
+      <section id="objective-card" class="card" aria-labelledby="objective-heading">
         <div class="section-header">
           <h2 id="objective-heading">Objective</h2>
           <span id="challenge-status" class="status-badge status-active" role="status" aria-live="polite">Keep Exploring</span>
@@ -55,7 +60,7 @@
         </div>
       </section>
 
-      <section class="card" aria-labelledby="feedback-heading">
+      <section id="feedback-card" class="card" aria-labelledby="feedback-heading">
         <h2 id="feedback-heading">Live Feedback</h2>
         <div class="metrics-grid">
           <div class="metric-box"><span id="metric-area-label" class="label">Area</span><span id="area-val">0</span></div>
@@ -66,7 +71,7 @@
         <ol id="step-feedback" class="feedback-list"></ol>
       </section>
 
-      <section class="card" aria-labelledby="encourage-heading">
+      <section id="encouragement-card" class="card" aria-labelledby="encourage-heading">
         <h2 id="encourage-heading">Encouragement</h2>
         <p id="encouragement-summary"></p>
         <ul id="reflection-history" class="history-list"></ul>
@@ -93,6 +98,12 @@
       <li id="onboarding-tip-3">Use hints and feedback to refine your thinking</li>
     </ul>
     <button id="start-learning-btn" class="btn">Start Learning</button>
+  </dialog>
+
+  <dialog id="success-dialog" aria-labelledby="success-title">
+    <h2 id="success-title">Great work!</h2>
+    <p id="success-message">You completed the objective. Keep going!</p>
+    <button id="success-close-btn" class="btn">Continue</button>
   </dialog>
 
   <script type="module" src="./src/main.js"></script>
