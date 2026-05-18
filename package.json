@@ -1,0 +1,10 @@
+{
+  "name": "geomente",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "node --check src/main.js src/core/*.js src/data/*.js src/ui/*.js tests/*.js",
+    "test": "node --test"
+  }
+}
