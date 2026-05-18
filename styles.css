@@ -87,6 +87,17 @@ body {
 }
 .btn-secondary { background: #334155; }
 .btn-danger { background: var(--danger); }
+.btn-discreet {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid #cbd5e1;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+}
+.btn-discreet:hover {
+  background: #e2e8f0;
+  color: var(--text);
+}
 
 .status-badge {
   border-radius: 999px;

@@ -7,8 +7,9 @@ import {
   isVerticallySymmetric,
   perimeter,
 } from "./geometry.js";
+import { t } from "./i18n.js";
 
-export function evaluateChallenge(challenge, points, isClosed, gridSize) {
+export function evaluateChallenge(challenge, points, isClosed, gridSize, locale = "en") {
   const area = areaShoelace(points, isClosed);
   const per = perimeter(points, isClosed);
   const selfIntersect = hasSelfIntersection(points, isClosed);
@@ -17,13 +18,16 @@ export function evaluateChallenge(challenge, points, isClosed, gridSize) {
   const picksResidual = Math.abs(area - (pickCounts.interior + pickCounts.boundary / 2 - 1));
 
   const feedback = [
-    `Shape is ${isClosed ? "closed" : "open"}.`,
-    `Vertices selected: ${points.length}.`,
-    `Area = ${area.toFixed(2)}, perimeter = ${per.toFixed(2)}.`,
+    t(locale, "feedback.shapeStatus", { state: t(locale, `feedback.shape.${isClosed ? "closed" : "open"}`) }),
+    t(locale, "feedback.verticesSelected", { count: points.length }),
+    t(locale, "feedback.areaPerimeter", { area: area.toFixed(2), perimeter: per.toFixed(2) }),
   ];
-  if (selfIntersect) feedback.push("Edges intersect: shape is not simple.");
-  if (degenerate) feedback.push("Degenerate polygon detected (area near 0).");
-  feedback.push(`Interior points: ${pickCounts.interior}, boundary points: ${pickCounts.boundary}.`);
+  if (selfIntersect) feedback.push(t(locale, "feedback.edgesIntersect"));
+  if (degenerate) feedback.push(t(locale, "feedback.degenerate"));
+  feedback.push(t(locale, "feedback.interiorBoundary", {
+    interior: pickCounts.interior,
+    boundary: pickCounts.boundary,
+  }));
 
   const criterionResults = challenge.successCriteria.map((criterion) => {
     const ok = criterionPass(criterion, {
@@ -40,7 +44,7 @@ export function evaluateChallenge(challenge, points, isClosed, gridSize) {
   });
 
   criterionResults.forEach((item) => {
-    feedback.push(`${item.ok ? "✓" : "✗"} ${describeCriterion(item.criterion)}`);
+    feedback.push(`${item.ok ? "✓" : "✗"} ${describeCriterion(item.criterion, locale)}`);
   });
 
   const passed = criterionResults.every((x) => x.ok);
@@ -81,27 +85,27 @@ function criterionPass(criterion, context) {
   }
 }
 
-function describeCriterion(criterion) {
+function describeCriterion(criterion, locale) {
   switch (criterion.type) {
     case "closed":
-      return criterion.expected ? "Close your polygon." : "Keep path open.";
+      return t(locale, `criterion.closed.${String(criterion.expected)}`);
     case "minVertices":
-      return `Use at least ${criterion.value} vertices.`;
+      return t(locale, "criterion.minVertices", { value: criterion.value });
     case "areaEquals":
-      return `Area must be ${criterion.value}.`;
+      return t(locale, "criterion.areaEquals", { value: criterion.value });
     case "perimeterEquals":
-      return `Perimeter must be ${criterion.value}.`;
+      return t(locale, "criterion.perimeterEquals", { value: criterion.value });
     case "nonDegenerate":
-      return "Polygon must have non-zero area.";
+      return t(locale, "criterion.nonDegenerate");
     case "nonSelfIntersecting":
-      return "Polygon must not self-intersect.";
+      return t(locale, "criterion.nonSelfIntersecting");
     case "hasDiagonalEdge":
-      return "Include at least one diagonal edge.";
+      return t(locale, "criterion.hasDiagonalEdge");
     case "verticalSymmetry":
-      return "Shape should be vertically symmetric.";
+      return t(locale, "criterion.verticalSymmetry");
     case "satisfiesPicksTheorem":
-      return "Satisfy Pick's theorem A = I + B/2 - 1.";
+      return t(locale, "criterion.satisfiesPicksTheorem");
     default:
-      return `Unknown criterion ${criterion.type}.`;
+      return t(locale, "criterion.unknown", { type: criterion.type });
   }
 }

@@ -1,4 +1,5 @@
 import { segmentLengths } from "../core/geometry.js";
+import { t } from "../core/i18n.js";
 
 const BOARD = {
   margin: 40,
@@ -12,7 +13,7 @@ function px(p) {
   };
 }
 
-export function renderBoard(svg, state, handlers) {
+export function renderBoard(svg, state, handlers, locale = "en") {
   svg.innerHTML = "";
 
   const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
@@ -49,7 +50,7 @@ export function renderBoard(svg, state, handlers) {
       hit.dataset.gridY = String(y);
       hit.setAttribute("tabindex", "0");
       hit.setAttribute("role", "button");
-      hit.setAttribute("aria-label", `Pin ${x}, ${y}`);
+      hit.setAttribute("aria-label", t(locale, "pin.aria", { x, y }));
       hit.addEventListener("click", handlers.onPinInteract);
       hit.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -89,17 +90,17 @@ export function renderBoard(svg, state, handlers) {
   }
 }
 
-export function updateStatusBadge(el, status) {
+export function updateStatusBadge(el, status, locale = "en") {
   if (status === "objective-met") {
     el.className = "status-badge status-completed";
-    el.textContent = "Objective met · Great job";
+    el.textContent = t(locale, "status.objectiveMet");
     return;
   }
   if (status === "revise") {
     el.className = "status-badge status-retry";
-    el.textContent = "Nice try · Refine and retry";
+    el.textContent = t(locale, "status.revise");
     return;
   }
   el.className = "status-badge status-active";
-  el.textContent = "Keep Exploring";
+  el.textContent = t(locale, "status.active");
 }

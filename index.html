@@ -10,8 +10,9 @@
   <header class="topbar" role="banner">
     <div>
       <h1>GeoMente</h1>
-      <p class="subtitle">Interactive geoboard focused on encouragement, exploration, and geometric thinking.</p>
+      <p id="app-subtitle" class="subtitle">Interactive geoboard focused on encouragement, exploration, and geometric thinking.</p>
     </div>
+    <button id="lang-toggle-btn" class="btn btn-discreet" type="button" aria-label="Switch language to Spanish">ES</button>
   </header>
 
   <main class="layout" role="main">
@@ -25,7 +26,7 @@
         <button id="reset-btn" class="btn btn-danger">Reset</button>
       </div>
       <svg id="geoboard" width="480" height="480" role="img" aria-label="8 by 8 geoboard with interactive pins"></svg>
-      <p class="kbd-help">Keyboard: Ctrl/Cmd+Z undo · Ctrl/Cmd+Y redo · Enter close shape · E edit mode · R reset</p>
+      <p id="kbd-help" class="kbd-help">Keyboard: Ctrl/Cmd+Z undo · Ctrl/Cmd+Y redo · Enter close shape · E edit mode · R reset</p>
     </section>
 
     <aside class="sidebar" aria-label="Learning panel">
@@ -37,14 +38,14 @@
         <p id="challenge-level" class="muted"></p>
         <h3 id="challenge-title"></h3>
         <p id="challenge-desc"></p>
-        <p><strong>Guided prompt:</strong> <span id="guided-prompt"></span></p>
-        <p><strong>Reflection:</strong> <span id="reflection-question"></span></p>
+        <p><strong id="guided-prompt-label">Guided prompt:</strong> <span id="guided-prompt"></span></p>
+        <p><strong id="reflection-label">Reflection:</strong> <span id="reflection-question"></span></p>
         <details>
-          <summary>Hints</summary>
+          <summary id="hints-summary">Hints</summary>
           <ul id="hints-list"></ul>
         </details>
         <details>
-          <summary>Common misconceptions</summary>
+          <summary id="misconceptions-summary">Common misconceptions</summary>
           <ul id="misconceptions-list"></ul>
         </details>
         <div class="challenge-nav">
@@ -57,10 +58,10 @@
       <section class="card" aria-labelledby="feedback-heading">
         <h2 id="feedback-heading">Live Feedback</h2>
         <div class="metrics-grid">
-          <div class="metric-box"><span class="label">Area</span><span id="area-val">0</span></div>
-          <div class="metric-box"><span class="label">Perimeter</span><span id="perimeter-val">0</span></div>
-          <div class="metric-box"><span class="label">Vertices</span><span id="vertices-val">0</span></div>
-          <div class="metric-box"><span class="label">Interior/Boundary</span><span id="pick-val">0 / 0</span></div>
+          <div class="metric-box"><span id="metric-area-label" class="label">Area</span><span id="area-val">0</span></div>
+          <div class="metric-box"><span id="metric-perimeter-label" class="label">Perimeter</span><span id="perimeter-val">0</span></div>
+          <div class="metric-box"><span id="metric-vertices-label" class="label">Vertices</span><span id="vertices-val">0</span></div>
+          <div class="metric-box"><span id="metric-interior-boundary-label" class="label">Interior/Boundary</span><span id="pick-val">0 / 0</span></div>
         </div>
         <ol id="step-feedback" class="feedback-list"></ol>
       </section>
@@ -76,7 +77,7 @@
         </div>
         <div class="action-row">
           <button id="export-btn" class="btn btn-secondary">Export Session</button>
-          <label for="import-input" class="btn btn-secondary">Import Session</label>
+          <label id="import-session-label" for="import-input" class="btn btn-secondary">Import Session</label>
           <input id="import-input" type="file" accept="application/json" />
         </div>
       </section>
@@ -85,11 +86,11 @@
 
   <dialog id="onboarding-dialog" aria-labelledby="onboarding-title">
     <h2 id="onboarding-title">Welcome to GeoMente</h2>
-    <p>This space is for trying ideas, making revisions, and learning geometry through exploration.</p>
+    <p id="onboarding-desc">This space is for trying ideas, making revisions, and learning geometry through exploration.</p>
     <ul>
-      <li>Tap/click pins to draw</li>
-      <li>Close shape by returning to first point or using Close Shape</li>
-      <li>Use hints and feedback to refine your thinking</li>
+      <li id="onboarding-tip-1">Tap/click pins to draw</li>
+      <li id="onboarding-tip-2">Close shape by returning to first point or using Close Shape</li>
+      <li id="onboarding-tip-3">Use hints and feedback to refine your thinking</li>
     </ul>
     <button id="start-learning-btn" class="btn">Start Learning</button>
   </dialog>
