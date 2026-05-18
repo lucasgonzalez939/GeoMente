@@ -1,13 +1,13 @@
 # GeoMente
 
-GeoMente is an interactive geoboard for learning geometry with a pedagogical progression, actionable feedback, and classroom-friendly tooling.
+GeoMente is an interactive geoboard for learning geometry through **encouragement, exploration, and reflection**.
 
 ## Educational scope
 
 ### Target audiences
 - Upper primary learners (ages 9–11)
 - Middle school learners (ages 12–14)
-- Teacher-led classroom and homework practice
+- Individual and classroom practice
 
 ### Measurable learning outcomes
 - Area: compute and compare polygon area on lattice grids
@@ -25,49 +25,39 @@ GeoMente is an interactive geoboard for learning geometry with a pedagogical pro
 
 ## Features implemented
 
-- Curriculum map with challenge metadata:
+- Curriculum map with pedagogical metadata:
   - concept tags, difficulty, prerequisites
   - hints, misconceptions, guided prompts, reflection questions
-  - richer success criteria (closure, area/perimeter constraints, diagonals, symmetry, non-self-intersection, Pick’s theorem)
+  - richer criteria (closure, area/perimeter, diagonals, symmetry, non-self-intersection, Pick’s theorem)
 - Robust geometry checks:
   - duplicate detection
   - self-intersection detection
   - degeneracy checks
   - interior/boundary lattice point counting
-- Step-by-step feedback panel that explains pass/fail criteria
-- Visual aids:
+- Step-by-step feedback explaining what is satisfied and what to revise
+- Visual decomposition aids:
   - segment length labels
   - interior/boundary counters
-- Interaction and UX improvements:
+- Interaction and accessibility improvements:
   - touch-friendly hit targets
   - undo/redo
   - edit mode for vertex repositioning
   - keyboard shortcuts
-- Accessibility/UI updates:
-  - semantic regions and labels
-  - focus-visible states
-  - non-color status cues
-  - consistent English localization
-- New information architecture:
+  - semantic labels and focus-visible states
+- UI information architecture:
   - board zone
   - objective zone
   - feedback zone
-  - progress/history zone
-- Onboarding dialog for first-time users
-- Progress and motivation:
-  - challenge completion/mastery state
-  - streak and best streak tracking
-  - attempt history
-- Teacher mode:
-  - assignment filtering by level
-- Persistence and data model:
+  - encouragement/reflection zone
+- Onboarding tutorial for first-time users
+- Encouragement-first design:
+  - supportive status messages
+  - reflection log and reflective sharing text
+  - no teacher mode and no grading dashboard
+- Session persistence:
   - schema-versioned local storage
-  - profile support
-  - import/export JSON for challenge progress/attempts
-- Share/print/playback tools:
-  - copy result summary
-  - browser print
-  - replay latest construction sequence
+  - session import/export
+  - playback snapshots
 
 ## Project architecture
 
@@ -77,7 +67,7 @@ GeoMente is an interactive geoboard for learning geometry with a pedagogical pro
 - `src/core/geometry.js` — geometric computations and validators
 - `src/core/challengeEngine.js` — criteria engine and pedagogical feedback
 - `src/core/state.js` — undo/redo runtime state model
-- `src/core/persistence.js` — schema-backed save/load/import/export
+- `src/core/persistence.js` — local session save/load/import/export
 - `src/ui/render.js` — SVG board rendering and status visualization
 - `src/main.js` — app orchestration and interaction flow
 - `tests/*.test.js` — unit and flow tests
@@ -89,4 +79,4 @@ npm run lint
 npm test
 ```
 
-No build step is required; open `index.html` directly in a modern browser.
+No build step is required; open `index.html` in a modern browser.

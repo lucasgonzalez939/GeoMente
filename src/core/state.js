@@ -8,8 +8,6 @@ export function createRuntimeState(challengeCount) {
     redoStack: [],
     selectedVertexIndex: null,
     editMode: false,
-    teacherMode: false,
-    assignmentFilter: "all",
     playbackFrames: [],
     playbackHandle: null,
     challengeCount,

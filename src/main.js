@@ -1,21 +1,18 @@
-import { challenges, curriculum } from "./data/curriculum.js";
+import { challenges } from "./data/curriculum.js";
 import { evaluateChallenge } from "./core/challengeEngine.js";
-import { hasDuplicatePoints, pointKey } from "./core/geometry.js";
+import { hasDuplicatePoints } from "./core/geometry.js";
 import { createRuntimeState, pushHistory, redo, undo } from "./core/state.js";
-import { defaultData, exportData, importData, loadData, saveData } from "./core/persistence.js";
+import { exportData, importData, loadData, saveData } from "./core/persistence.js";
 import { renderBoard, updateStatusBadge } from "./ui/render.js";
 
 const state = createRuntimeState(challenges.length);
 const storage = loadData();
 const ui = mapUi();
 
-initializeProfiles();
 wireControls();
 rerender();
 
-if (!storage.firstRunDone) {
-  ui.onboardingDialog.showModal();
-}
+if (!storage.firstRunDone) ui.onboardingDialog.showModal();
 
 function mapUi() {
   return {
@@ -34,16 +31,10 @@ function mapUi() {
     verticesVal: byId("vertices-val"),
     pickVal: byId("pick-val"),
     stepFeedback: byId("step-feedback"),
-    progressSummary: byId("progress-summary"),
-    streakSummary: byId("streak-summary"),
-    historyList: byId("history-list"),
-    profileSelect: byId("profile-select"),
-    profileName: byId("profile-name"),
-    teacherPanel: byId("teacher-panel"),
-    assignmentSelect: byId("assignment-select"),
-    teacherModeBtn: byId("teacher-mode-btn"),
-    editModeBtn: byId("edit-mode-btn"),
+    encouragementSummary: byId("encouragement-summary"),
+    reflectionHistory: byId("reflection-history"),
     onboardingDialog: byId("onboarding-dialog"),
+    editModeBtn: byId("edit-mode-btn"),
   };
 }
 
@@ -51,44 +42,20 @@ function byId(id) {
   return document.getElementById(id);
 }
 
-function currentChallengePool() {
-  if (state.assignmentFilter === "all") return challenges;
-  return challenges.filter((c) => c.level === state.assignmentFilter);
-}
-
 function getCurrentChallenge() {
-  const pool = currentChallengePool();
-  if (state.currentChallengeIdx >= pool.length) state.currentChallengeIdx = 0;
-  return pool[state.currentChallengeIdx];
-}
-
-function currentProfile() {
-  return storage.profiles[storage.activeProfile];
-}
-
-function initializeProfiles() {
-  ui.profileSelect.innerHTML = "";
-  Object.keys(storage.profiles).forEach((name) => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    ui.profileSelect.appendChild(opt);
-  });
-  ui.profileSelect.value = storage.activeProfile;
+  return challenges[state.currentChallengeIdx];
 }
 
 function wireControls() {
   byId("prev-challenge-btn").addEventListener("click", () => {
-    const pool = currentChallengePool();
-    state.currentChallengeIdx = (state.currentChallengeIdx - 1 + pool.length) % pool.length;
-    resetBoard(false);
+    state.currentChallengeIdx = (state.currentChallengeIdx - 1 + challenges.length) % challenges.length;
+    resetBoard();
     rerender();
   });
 
   byId("next-challenge-btn").addEventListener("click", () => {
-    const pool = currentChallengePool();
-    state.currentChallengeIdx = (state.currentChallengeIdx + 1) % pool.length;
-    resetBoard(false);
+    state.currentChallengeIdx = (state.currentChallengeIdx + 1) % challenges.length;
+    resetBoard();
     rerender();
   });
 
@@ -106,7 +73,7 @@ function wireControls() {
     if (state.pathPoints.length > 2) {
       pushHistory(state);
       state.isClosed = true;
-      finalizeAttempt("manual-close");
+      finalizeAttempt();
       rerender();
     }
   });
@@ -120,60 +87,36 @@ function wireControls() {
   });
 
   byId("reset-btn").addEventListener("click", () => {
-    resetBoard(true);
-    rerender();
-  });
-
-  byId("create-profile-btn").addEventListener("click", () => {
-    const name = ui.profileName.value.trim();
-    if (!name || storage.profiles[name]) return;
-    storage.profiles[name] = defaultData().profiles.Student;
-    storage.activeProfile = name;
-    ui.profileName.value = "";
-    initializeProfiles();
-    saveData(storage);
-    rerender();
-  });
-
-  ui.profileSelect.addEventListener("change", () => {
-    storage.activeProfile = ui.profileSelect.value;
-    saveData(storage);
-    rerender();
-  });
-
-  ui.teacherModeBtn.addEventListener("click", () => {
-    state.teacherMode = !state.teacherMode;
-    ui.teacherPanel.classList.toggle("hidden", !state.teacherMode);
-    ui.teacherModeBtn.setAttribute("aria-pressed", String(state.teacherMode));
-  });
-
-  ui.assignmentSelect.addEventListener("change", () => {
-    state.assignmentFilter = ui.assignmentSelect.value;
-    state.currentChallengeIdx = 0;
-    resetBoard(false);
+    resetBoard();
     rerender();
   });
 
   byId("share-btn").addEventListener("click", async () => {
-    const summary = buildResultSummary();
+    const summary = buildReflectionSummary();
     try {
       await navigator.clipboard.writeText(summary);
-      alert("Result copied to clipboard.");
+      alert("Reflection copied to clipboard.");
     } catch {
-      prompt("Copy your result:", summary);
+      prompt("Copy your reflection:", summary);
     }
   });
 
   byId("print-btn").addEventListener("click", () => window.print());
-
   byId("playback-btn").addEventListener("click", () => playback());
 
   byId("export-btn").addEventListener("click", () => {
-    const blob = new Blob([exportData(storage)], { type: "application/json" });
+    const payload = {
+      ...storage,
+      lastSession: {
+        challengeId: getCurrentChallenge().id,
+        snapshots: state.playbackFrames,
+      },
+    };
+    const blob = new Blob([exportData(payload)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "geomente-data.json";
+    a.download = "geomente-session.json";
     a.click();
     URL.revokeObjectURL(url);
   });
@@ -185,10 +128,12 @@ function wireControls() {
     try {
       const imported = importData(text);
       Object.assign(storage, imported);
-      initializeProfiles();
+      if (Array.isArray(storage.lastSession?.snapshots)) {
+        state.playbackFrames = storage.lastSession.snapshots;
+      }
       saveData(storage);
       rerender();
-      alert("Import successful.");
+      alert("Session import successful.");
     } catch (err) {
       alert(`Import failed: ${err.message}`);
     }
@@ -218,12 +163,12 @@ function wireControls() {
     if (e.key === "Enter" && state.pathPoints.length > 2 && !state.isClosed) {
       pushHistory(state);
       state.isClosed = true;
-      finalizeAttempt("keyboard-close");
+      finalizeAttempt();
       rerender();
       return;
     }
     if (e.key.toLowerCase() === "r") {
-      resetBoard(true);
+      resetBoard();
       rerender();
       return;
     }
@@ -266,7 +211,7 @@ function onPinInteract(event) {
     }
     state.pathPoints = next;
     state.selectedVertexIndex = null;
-    if (state.isClosed) finalizeAttempt("edit");
+    if (state.isClosed) finalizeAttempt();
     rerender();
     return;
   }
@@ -278,7 +223,7 @@ function onPinInteract(event) {
   if (isSameAsStart) {
     pushHistory(state);
     state.isClosed = true;
-    finalizeAttempt("tap-close");
+    finalizeAttempt();
     rerender();
     return;
   }
@@ -291,52 +236,32 @@ function onPinInteract(event) {
   rerender();
 }
 
-function resetBoard(countAttempt) {
-  if (countAttempt) {
-    currentProfile().attempts.push({
-      challengeId: getCurrentChallenge().id,
-      timestamp: Date.now(),
-      result: "reset",
-      points: state.pathPoints.length,
-    });
-  }
+function resetBoard() {
   state.pathPoints = [];
   state.isClosed = false;
   state.selectedVertexIndex = null;
   state.historyStack = [];
   state.redoStack = [];
   state.playbackFrames = [];
-  saveData(storage);
 }
 
-function finalizeAttempt(source) {
+function finalizeAttempt() {
   const challenge = getCurrentChallenge();
   const result = evaluateChallenge(challenge, state.pathPoints, state.isClosed, state.gridSize);
-  const profile = currentProfile();
 
-  const attempt = {
+  const reflection = {
     challengeId: challenge.id,
     timestamp: Date.now(),
-    source,
-    passed: result.passed,
-    area: Number(result.area.toFixed(2)),
-    perimeter: Number(result.perimeter.toFixed(2)),
-    points: state.pathPoints.map((p) => ({ ...p })),
+    message: result.passed
+      ? "Objective reached. Nice mathematical reasoning!"
+      : "Good attempt. Use feedback and try another strategy.",
   };
-  profile.attempts.push(attempt);
-
-  if (result.passed) {
-    profile.progress[challenge.id] = "completed";
-    profile.completedHistory.push({ id: challenge.id, at: Date.now() });
-    profile.streak += 1;
-    profile.bestStreak = Math.max(profile.bestStreak, profile.streak);
-    const passCount = profile.attempts.filter((a) => a.challengeId === challenge.id && a.passed).length;
-    if (passCount >= 2) profile.progress[challenge.id] = "mastered";
-  } else {
-    profile.streak = 0;
-  }
-
-  state.playbackFrames.push({ pathPoints: state.pathPoints.map((t) => ({ ...t })), isClosed: state.isClosed });
+  storage.reflections.push(reflection);
+  storage.lastSession = {
+    challengeId: challenge.id,
+    notes: reflection.message,
+    snapshots: state.playbackFrames,
+  };
   saveData(storage);
 }
 
@@ -349,12 +274,11 @@ function rerender() {
   renderBoard(ui.svg, state, { onPinInteract });
   const challenge = getCurrentChallenge();
   const result = evaluateCurrent();
-  const profile = currentProfile();
 
   ui.challengeTitle.textContent = challenge.title;
   ui.challengeDesc.textContent = challenge.description;
   ui.challengeLevel.textContent = `Level: ${challenge.level.toUpperCase()} · Concept: ${challenge.concept.join(", ")} · Difficulty: ${challenge.difficulty}`;
-  ui.challengeIndex.textContent = `${state.currentChallengeIdx + 1} / ${currentChallengePool().length}`;
+  ui.challengeIndex.textContent = `${state.currentChallengeIdx + 1} / ${challenges.length}`;
   ui.guidedPrompt.textContent = challenge.guidedPrompt;
   ui.reflectionQuestion.textContent = challenge.reflectionQuestion;
 
@@ -368,34 +292,39 @@ function rerender() {
 
   ui.stepFeedback.innerHTML = result.feedback.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
 
-  const status = profile.progress[challenge.id] || (state.isClosed ? (result.passed ? "completed" : "retry") : "active");
+  const status = state.isClosed ? (result.passed ? "objective-met" : "revise") : "active";
   updateStatusBadge(ui.challengeStatus, status);
 
-  const completed = Object.values(profile.progress).filter((s) => s === "completed" || s === "mastered").length;
-  ui.progressSummary.textContent = `Completed challenges: ${completed}/${challenges.length}.`;
-  ui.streakSummary.textContent = `Current streak: ${profile.streak} · Best streak: ${profile.bestStreak}.`;
+  ui.encouragementSummary.textContent = result.passed
+    ? "Great thinking! Try finding a second, different solution for the same objective."
+    : "You are building understanding—adjust one decision and observe what changes.";
 
-  const lastAttempts = profile.attempts.slice(-10).reverse();
-  ui.historyList.innerHTML = lastAttempts.length
-    ? lastAttempts.map((a) => `<li>${new Date(a.timestamp).toLocaleString()} · ${a.challengeId} · ${a.passed ? "PASS" : a.result || "TRY"}</li>`).join("")
-    : "<li>No attempts yet.</li>";
+  const recent = storage.reflections.slice(-8).reverse();
+  ui.reflectionHistory.replaceChildren();
+  if (recent.length) {
+    recent.forEach((r) => {
+      const li = document.createElement("li");
+      li.textContent = `${new Date(r.timestamp).toLocaleString()} · ${r.challengeId} · ${r.message}`;
+      ui.reflectionHistory.appendChild(li);
+    });
+  } else {
+    const li = document.createElement("li");
+    li.textContent = "No reflections yet. Complete a shape to generate one.";
+    ui.reflectionHistory.appendChild(li);
+  }
 }
 
-function buildResultSummary() {
+function buildReflectionSummary() {
   const challenge = getCurrentChallenge();
   const result = evaluateCurrent();
-  const profile = currentProfile();
-  const unique = new Set(state.pathPoints.map(pointKey)).size;
   return [
-    `GeoMente Result`,
-    `Profile: ${storage.activeProfile}`,
+    `GeoMente Reflection`,
     `Challenge: ${challenge.title} (${challenge.id})`,
-    `Status: ${result.passed ? "PASS" : "IN PROGRESS"}`,
+    `State: ${state.isClosed ? (result.passed ? "Objective met" : "In revision") : "Exploring"}`,
     `Area: ${result.area.toFixed(2)}`,
     `Perimeter: ${result.perimeter.toFixed(2)}`,
-    `Vertices: ${state.pathPoints.length} (unique: ${unique})`,
-    `Interior/Boundary: ${result.pickCounts.interior}/${result.pickCounts.boundary}`,
-    `Streak: ${profile.streak}`,
+    `Prompt: ${challenge.guidedPrompt}`,
+    `Reflection question: ${challenge.reflectionQuestion}`,
   ].join("\n");
 }
 

@@ -3,17 +3,13 @@ const STORAGE_KEY = "geomente.v1";
 export function defaultData() {
   return {
     schemaVersion: 1,
-    activeProfile: "Student",
-    profiles: {
-      Student: {
-        progress: {},
-        completedHistory: [],
-        attempts: [],
-        streak: 0,
-        bestStreak: 0,
-      },
-    },
     firstRunDone: false,
+    reflections: [],
+    lastSession: {
+      challengeId: null,
+      notes: "",
+      snapshots: [],
+    },
   };
 }
 
@@ -23,7 +19,7 @@ export function loadData() {
   try {
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.schemaVersion !== 1) return defaultData();
-    return parsed;
+    return { ...defaultData(), ...parsed };
   } catch {
     return defaultData();
   }
@@ -39,8 +35,6 @@ export function exportData(data) {
 
 export function importData(jsonText) {
   const parsed = JSON.parse(jsonText);
-  if (!parsed || parsed.schemaVersion !== 1 || typeof parsed.profiles !== "object") {
-    throw new Error("Invalid import format.");
-  }
-  return parsed;
+  if (!parsed || parsed.schemaVersion !== 1) throw new Error("Invalid import format.");
+  return { ...defaultData(), ...parsed };
 }

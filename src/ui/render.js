@@ -90,21 +90,16 @@ export function renderBoard(svg, state, handlers) {
 }
 
 export function updateStatusBadge(el, status) {
-  if (status === "mastered") {
-    el.className = "status-badge status-mastered";
-    el.textContent = "Mastered ✓";
-    return;
-  }
-  if (status === "completed") {
+  if (status === "objective-met") {
     el.className = "status-badge status-completed";
-    el.textContent = "Completed ✓";
+    el.textContent = "Objective met · Great job";
     return;
   }
-  if (status === "retry") {
+  if (status === "revise") {
     el.className = "status-badge status-retry";
-    el.textContent = "Needs Revision";
+    el.textContent = "Nice try · Refine and retry";
     return;
   }
   el.className = "status-badge status-active";
-  el.textContent = "Active · In Progress";
+  el.textContent = "Keep Exploring";
 }
