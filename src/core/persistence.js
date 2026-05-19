@@ -3,6 +3,7 @@ const STORAGE_KEY = "geomente.v1";
 export function defaultData() {
   return {
     schemaVersion: 1,
+    language: "en",
     firstRunDone: false,
     reflections: [],
     lastSession: {
